@@ -86,19 +86,47 @@ class PlaybackStream(Node, ControlsMixin):
 
     @classmethod
     def build(klass, conn, core):
-	super(PlaybackStream, klass).build(conn, core, 'PlaybackStreams')
+ 	super(PlaybackStream, klass).build(conn, core, 'PlaybackStreams')
 	
     def __init__(self, path, obj):
 	super(PlaybackStream, self).__init__(path, obj)
-	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)	
+	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)
+	self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
+	self.sink_path = self.obj.Get(self.I_STREAM_PROP, "Device", dbus_interface=I_PROP)
+
 
     def __str__(self):
 	return 'Playback %d: %s %s' % (self.index, self.volume, self.mute)
 
 
 
-class Client(object):
-    pass
+class Client(Node):
+
+    I_CLIENT_PROP =  "org.PulseAudio.Core1.Client"
+
+    @classmethod
+    def build(klass, conn, core):
+ 	super(Client, klass).build(conn, core, 'Clients')
+	
+    def __init__(self, path, obj):
+	super(Client, self).__init__(path, obj)
+	self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
+	prop_list = self.obj.Get(self.I_CLIENT_PROP, "PropertyList",  dbus_interface=I_PROP, byte_arrays=True)
+	self.a_name = prop_list['application.name']
+	try:
+	    self.a_pid = prop_list['application.process.id']
+	    self.a_exe = prop_list['application.process.binary']
+	except KeyError, e:
+	    logger.debug('Ignoring client: %d, %s. %s' % (self.index, self.a_name, e))
+	    # Delete self? Or keep and get missing value. Maybe client
+	    # doesnt provide values?
+	    self.a_pid = 'na'
+	    self.a_exe = 'na'
+
+    def __str__(self):
+	return 'Client %d: %s %s %s' % (self.index, self.a_name, self.a_exe, self.a_pid)
+
+
 
 
 
@@ -107,6 +135,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)                                                      
     conn, core = get_core()
     Sink.build(conn, core)
+    print '*** Sinks'
     for k, v in Sink.nodes.items():
 	print k, v
 	if v.index == 0:
@@ -115,9 +144,14 @@ if __name__ == '__main__':
 	    print v.mute
 	    v.mute = False
 
+    print '*** Streams'
     PlaybackStream.build(conn, core)
     for k, v in PlaybackStream.nodes.items():
 	print k, v
-	if v.index == int(sys.argv[1]):
+	if 0 and v.index == int(sys.argv[1]):
 	    v.mute = False
+    print '*** Clients'
+    Client.build(conn, core)
+    for k, v in Client.nodes.items():
+	print k, v
     
