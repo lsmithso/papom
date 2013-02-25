@@ -19,21 +19,34 @@ def get_core():
     core = conn.get_object(object_path="/org/pulseaudio/core1")
     return conn, core
 
-
-class Sink(object):
-    sinks = {}
+class Node(object):
+    nodes = {}
 
     @classmethod
-    def build(klass, conn, core):
-	for path in  core.Get("org.PulseAudio.Core1", "Sinks", dbus_interface=I_PROP):
+    def build(klass, conn, core, name):
+	for path in  core.Get("org.PulseAudio.Core1", name, dbus_interface=I_PROP):
 	    obj = conn.get_object(object_path = path)
-	    klass.sinks[path] = klass(path, obj)
+	    klass.nodes[path] = klass(path, obj)
 	
     def __init__(self, path, obj):
 	self.path = path
 	self.obj = obj
-	self.index = self.obj.Get("org.PulseAudio.Core1.Device", "Index",  dbus_interface=I_PROP)	
-	self.name = self.obj.Get("org.PulseAudio.Core1.Device", "Name", dbus_interface=I_PROP)
+
+
+    
+
+class Sink(Node):
+
+    I_SINK_PROP =  "org.PulseAudio.Core1.Device"
+
+    @classmethod
+    def build(klass, conn, core):
+	super(Sink, klass).build(conn, core, 'Sinks')
+	
+    def __init__(self, path, obj):
+	super(Sink, self).__init__(path, obj)
+	self.index = self.obj.Get(self.I_SINK_PROP, "Index",  dbus_interface=I_PROP)	
+	self.name = self.obj.Get(self.I_SINK_PROP, "Name", dbus_interface=I_PROP)
 	
     def get_volume(self):
 	pass
@@ -63,7 +76,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)                                                      
     conn, core = get_core()
     Sink.build(conn, core)
-    for k, v in Sink.sinks.items():
+    for k, v in Sink.nodes.items():
 	print k, v
     
     
