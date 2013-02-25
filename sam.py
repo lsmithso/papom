@@ -36,26 +36,25 @@ class Node(object):
 
 class ControlsMixin(object):
 
-    I_DEVICE = "org.PulseAudio.Core1.Device"
     
     def get_volume(self):
 	# Assumes balanced mono
-	    vs = self.obj.Get(self.I_DEVICE, "Volume",  dbus_interface=I_PROP)
+	    vs = self.obj.Get(self.I_CONTROL, "Volume",  dbus_interface=I_PROP)
 	    return  int(vs[0])
 	    
 
     def set_volume(self, v):
 	v1 = dbus.UInt32(v)
-	self.obj.Set(self.I_DEVICE, "Volume", [v1, v1], dbus_interface = I_PROP)
+	self.obj.Set(self.I_CONTROL, "Volume", [v1, v1], dbus_interface = I_PROP)
 
     volume = property(get_volume, set_volume)
 
     def get_mute(self):
-	return 	    self.obj.Get(self.I_DEVICE, "Mute",  dbus_interface=I_PROP)
+	return 	    self.obj.Get(self.I_CONTROL, "Mute",  dbus_interface=I_PROP)
 
 
     def set_mute(self, v):
-	self.obj.Set(self.I_DEVICE, "Mute", v, dbus_interface=I_PROP)
+	self.obj.Set(self.I_CONTROL, "Mute", v, dbus_interface=I_PROP)
 	    
     mute = property(get_mute, set_mute)
     
@@ -64,7 +63,9 @@ class ControlsMixin(object):
 class Sink(Node, ControlsMixin):
 
     I_SINK_PROP =  "org.PulseAudio.Core1.Device"
-
+    I_CONTROL = I_SINK_PROP
+    I_CONTROL = I_SINK_PROP
+	
     @classmethod
     def build(klass, conn, core):
 	super(Sink, klass).build(conn, core, 'Sinks')
@@ -78,8 +79,23 @@ class Sink(Node, ControlsMixin):
     def __str__(self):
 	return 'Sink %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
 
-class PlaybackStream(object):
-    pass
+
+class PlaybackStream(Node, ControlsMixin):
+    I_STREAM_PROP =  "org.PulseAudio.Core1.Stream"
+    I_CONTROL = I_STREAM_PROP
+
+    @classmethod
+    def build(klass, conn, core):
+	super(PlaybackStream, klass).build(conn, core, 'PlaybackStreams')
+	
+    def __init__(self, path, obj):
+	super(PlaybackStream, self).__init__(path, obj)
+	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)	
+
+    def __str__(self):
+	return 'Playback %d: %s %s' % (self.index, self.volume, self.mute)
+
+
 
 class Client(object):
     pass
@@ -98,3 +114,10 @@ if __name__ == '__main__':
 	    v.volume = 60000
 	    print v.mute
 	    v.mute = False
+
+    PlaybackStream.build(conn, core)
+    for k, v in PlaybackStream.nodes.items():
+	print k, v
+	if v.index == int(sys.argv[1]):
+	    v.mute = False
+    
