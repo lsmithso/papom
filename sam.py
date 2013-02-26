@@ -1,8 +1,7 @@
 # Sound architecture models
 
 # TODO:
-# Build links between nodes: bi-dierectional?
-# Add def build_sam - build + link
+# Handle race where nodes in the pa server are dleted while running
 #
 import sys, os, dbus, logging
 
@@ -41,6 +40,10 @@ class Node(object):
 	self.path = path
 	self.obj = obj
 
+    @classmethod
+    def make_links(klass):
+	for node in klass.nodes.values():
+	    node._make_links()
 
 
 class ControlsMixin(object):
@@ -81,8 +84,15 @@ class Sink(Node, ControlsMixin):
 	super(Sink, self).__init__(path, obj)
 	self.index = self.obj.Get(self.I_SINK_PROP, "Index",  dbus_interface=I_PROP)	
 	self.name = self.obj.Get(self.I_SINK_PROP, "Name", dbus_interface=I_PROP)
+	self.playback_links = []
+	logger.debug('Added: %s', self)
 	
 
+    def _make_links(self):
+	# Sinks don't have a path back to Playback Streams, so artifice one.
+	for ps  in PlaybackStream.nodes.values():
+	    if ps.sink_link == self:
+		self.playback_links.append(ps)
     def __str__(self):
 	return 'Sink %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
 
@@ -100,6 +110,11 @@ class PlaybackStream(Node, ControlsMixin):
 	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)
 	self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
 	self.sink_path = self.obj.Get(self.I_STREAM_PROP, "Device", dbus_interface=I_PROP)
+	logger.debug('Added: %s', self)
+
+    def _make_links(self):
+	self.sink_link = Sink.nodes[self.sink_path]
+	self.client_sink = Client.nodes[self.client_path]
 
 
     def __str__(self):
@@ -117,12 +132,22 @@ class Client(Node):
 	
     def __init__(self, path, obj):
 	super(Client, self).__init__(path, obj)
+	self.playback_links = []
 	self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
+	self.playback_streams = self.obj.Get(self.I_CLIENT_PROP, "PlaybackStreams", dbus_interface=I_PROP)
 	prop_list = self.obj.Get(self.I_CLIENT_PROP, "PropertyList",  dbus_interface=I_PROP, byte_arrays=True)
 	self.a_name = prop_list.get('application.name')
 	self.a_pid = prop_list.get('application.process.id')
 	self.a_exe = prop_list.get('application.process.binary')
+	logger.debug('Added: %s', self)
+	
 
+    def _make_links(self):
+	# Dunno why streams links are arrays
+	for ps in self.playback_streams:
+	    self.playback_links.append(PlaybackStream.nodes[ps])
+
+    
     def __str__(self):
 	return 'Client %d: %s %s %s' % (self.index, self.a_name, self.a_exe, self.a_pid)
 
@@ -134,7 +159,10 @@ def build_sam():
     Sink.build(conn, core)
     PlaybackStream.build(conn, core)
     Client.build(conn, core)
-
+    Client.make_links()
+    PlaybackStream.make_links()
+    Sink.make_links()
+    
 
 if __name__ == '__main__':
     # Self test
@@ -157,4 +185,5 @@ if __name__ == '__main__':
     print '*** Clients'
     for k, v in Client.nodes.items():
 	print k, v
+	print '|'.join([str(x) for x in v.playback_links])
     
