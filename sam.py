@@ -57,7 +57,10 @@ class ControlsMixin(object):
 
     def set_volume(self, v):
 	v1 = dbus.UInt32(v)
-	self.obj.Set(self.I_CONTROL, "Volume", [v1, v1], dbus_interface = I_PROP)
+	# Some streams/sinks are mono, and pa barfs if setting these
+	# to more than one channel.
+	vs = self.obj.Get(self.I_CONTROL, "Volume",  dbus_interface=I_PROP)
+	self.obj.Set(self.I_CONTROL, "Volume", [v1] * len(vs), dbus_interface = I_PROP)
     volume = property(get_volume, set_volume)
 
     def get_mute(self):

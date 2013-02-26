@@ -8,9 +8,10 @@ logger = logging.getLogger(__name__)
 
 def blow_ears_off():
     for node in sam.Sink.nodes.values() + sam.PlaybackStream.nodes.values():
-	node.nute = False
-	node.volume = 2**16
 	logger.debug('Nax Unmuted %s', node)
+		
+	node.nute = False
+	node.volume = 50000
 
 	
 if __name__ == '__main__':
