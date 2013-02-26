@@ -1,7 +1,6 @@
 # Sound architecture models
 
 # TODO:
-# redo as metaclass
 # Build links between nodes: bi-dierectional?
 # Add def build_sam - build + link
 #
@@ -24,7 +23,13 @@ def get_core():
     core = conn.get_object(object_path="/org/pulseaudio/core1")
     return conn, core
 
+class NodeMeta(type):
+    def __new__(meta, name, bases, dct):
+	dct['nodes'] = {}
+        return super(NodeMeta, meta).__new__(meta, name, bases, dct)
+
 class Node(object):
+    __metaclass__ = NodeMeta
 
     @classmethod
     def build(klass, conn, core, name):
@@ -50,7 +55,6 @@ class ControlsMixin(object):
     def set_volume(self, v):
 	v1 = dbus.UInt32(v)
 	self.obj.Set(self.I_CONTROL, "Volume", [v1, v1], dbus_interface = I_PROP)
-
     volume = property(get_volume, set_volume)
 
     def get_mute(self):
@@ -59,7 +63,6 @@ class ControlsMixin(object):
 
     def set_mute(self, v):
 	self.obj.Set(self.I_CONTROL, "Mute", v, dbus_interface=I_PROP)
-	    
     mute = property(get_mute, set_mute)
     
 	
@@ -69,7 +72,6 @@ class Sink(Node, ControlsMixin):
     I_SINK_PROP =  "org.PulseAudio.Core1.Device"
     I_CONTROL = I_SINK_PROP
     I_CONTROL = I_SINK_PROP
-    nodes = {}
 	
     @classmethod
     def build(klass, conn, core):
@@ -88,7 +90,6 @@ class Sink(Node, ControlsMixin):
 class PlaybackStream(Node, ControlsMixin):
     I_STREAM_PROP =  "org.PulseAudio.Core1.Stream"
     I_CONTROL = I_STREAM_PROP
-    nodes = {}
 
     @classmethod
     def build(klass, conn, core):
@@ -109,7 +110,6 @@ class PlaybackStream(Node, ControlsMixin):
 class Client(Node):
 
     I_CLIENT_PROP =  "org.PulseAudio.Core1.Client"
-    nodes = {}
 
     @classmethod
     def build(klass, conn, core):
