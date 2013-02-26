@@ -1,5 +1,10 @@
 # Sound architecture models
 
+# TODO:
+# Fix missing client props for pid etc
+# Build links between nodes: bi-dierectional?
+# Add def build_sam - build + link
+#
 import sys, os, dbus, logging
 
 logger = logging.getLogger(__name__)
@@ -20,7 +25,6 @@ def get_core():
     return conn, core
 
 class Node(object):
-    nodes = {}
 
     @classmethod
     def build(klass, conn, core, name):
@@ -65,6 +69,7 @@ class Sink(Node, ControlsMixin):
     I_SINK_PROP =  "org.PulseAudio.Core1.Device"
     I_CONTROL = I_SINK_PROP
     I_CONTROL = I_SINK_PROP
+    nodes = {}
 	
     @classmethod
     def build(klass, conn, core):
@@ -83,6 +88,7 @@ class Sink(Node, ControlsMixin):
 class PlaybackStream(Node, ControlsMixin):
     I_STREAM_PROP =  "org.PulseAudio.Core1.Stream"
     I_CONTROL = I_STREAM_PROP
+    nodes = {}
 
     @classmethod
     def build(klass, conn, core):
@@ -103,6 +109,7 @@ class PlaybackStream(Node, ControlsMixin):
 class Client(Node):
 
     I_CLIENT_PROP =  "org.PulseAudio.Core1.Client"
+    nodes = {}
 
     @classmethod
     def build(klass, conn, core):
@@ -112,16 +119,9 @@ class Client(Node):
 	super(Client, self).__init__(path, obj)
 	self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
 	prop_list = self.obj.Get(self.I_CLIENT_PROP, "PropertyList",  dbus_interface=I_PROP, byte_arrays=True)
-	self.a_name = prop_list['application.name']
-	try:
-	    self.a_pid = prop_list['application.process.id']
-	    self.a_exe = prop_list['application.process.binary']
-	except KeyError, e:
-	    logger.debug('Ignoring client: %d, %s. %s' % (self.index, self.a_name, e))
-	    # Delete self? Or keep and get missing value. Maybe client
-	    # doesnt provide values?
-	    self.a_pid = 'na'
-	    self.a_exe = 'na'
+	self.a_name = prop_list.get('application.name')
+	self.a_pid = prop_list.get('application.process.id')
+	self.a_exe = prop_list.get('application.process.binary')
 
     def __str__(self):
 	return 'Client %d: %s %s %s' % (self.index, self.a_name, self.a_exe, self.a_pid)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)                                                      
     conn, core = get_core()
     Sink.build(conn, core)
-    print '*** Sinks'
+    print '*** Sinks', id(Sink.nodes)
     for k, v in Sink.nodes.items():
 	print k, v
 	if v.index == 0:
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 	    print v.mute
 	    v.mute = False
 
-    print '*** Streams'
+    print '*** Streams', id(PlaybackStream.nodes)
     PlaybackStream.build(conn, core)
     for k, v in PlaybackStream.nodes.items():
 	print k, v
