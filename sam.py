@@ -129,12 +129,17 @@ class Client(Node):
 
 
 
+def build_sam():
+    conn, core = get_core()
+    Sink.build(conn, core)
+    PlaybackStream.build(conn, core)
+    Client.build(conn, core)
+
 
 if __name__ == '__main__':
     # Self test
-    logging.basicConfig(level=logging.DEBUG)                                                      
-    conn, core = get_core()
-    Sink.build(conn, core)
+    logging.basicConfig(level=logging.DEBUG)
+    build_sam()
     print '*** Sinks', id(Sink.nodes)
     for k, v in Sink.nodes.items():
 	print k, v
@@ -145,13 +150,11 @@ if __name__ == '__main__':
 	    v.mute = False
 
     print '*** Streams', id(PlaybackStream.nodes)
-    PlaybackStream.build(conn, core)
     for k, v in PlaybackStream.nodes.items():
 	print k, v
 	if 0 and v.index == int(sys.argv[1]):
 	    v.mute = False
     print '*** Clients'
-    Client.build(conn, core)
     for k, v in Client.nodes.items():
 	print k, v
     
