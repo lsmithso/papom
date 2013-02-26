@@ -1,7 +1,7 @@
 # Sound architecture models
 
 # TODO:
-# Fix missing client props for pid etc
+# redo as metaclass
 # Build links between nodes: bi-dierectional?
 # Add def build_sam - build + link
 #
