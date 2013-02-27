@@ -30,5 +30,11 @@ class Sink:
     return Sink from static
 )
 
+Add pending ops on clients? Ie mute the next time it connects to a
+stream? ie skype only sets up a playback stream in call, so cannot be
+muted in advance. Needs sigmal signal to work.
+
+
+
 
 
