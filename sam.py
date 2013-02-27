@@ -1,7 +1,11 @@
 # Sound architecture models
 
 # TODO:
+# Add print of client -> sink
 # Handle race where nodes in the pa server are dleted while running
+# Add move sink input
+# improve __str__ format. L
+# Only print last part of paths. Add src/sink to stream
 #
 import sys, os, dbus, logging
 
@@ -139,9 +143,17 @@ class Client(Node):
 	self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
 	self.playback_streams = self.obj.Get(self.I_CLIENT_PROP, "PlaybackStreams", dbus_interface=I_PROP)
 	prop_list = self.obj.Get(self.I_CLIENT_PROP, "PropertyList",  dbus_interface=I_PROP, byte_arrays=True)
-	self.a_name = prop_list.get('application.name')
-	self.a_pid = prop_list.get('application.process.id')
-	self.a_exe = prop_list.get('application.process.binary')
+
+	# dbus returns byte array strings with a C style trailing null
+	def get(n):
+	    v = prop_list.get(n)
+	    if v is not None:
+		return str(v[:-1] if v[-1] == '\x00' else v)
+	
+	self.a_name = get('application.name')
+	v = get('application.process.id')
+	self.a_pid = int(v) if v else 0
+	self.a_exe = get('application.process.binary')
 	logger.debug('Added: %s', self)
 	
 
