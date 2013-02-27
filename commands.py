@@ -75,7 +75,7 @@ if __name__ == '__main__':
     sam.build_sam()
     print_sam()
     ai = int(sys.argv[1])
-    blow_ears_off()
+    #    blow_ears_off()
     #    set_volume_all(intai)
     #    incr_volume_all(ai)
     print [str(x) for x in filter_pid(ai)]
