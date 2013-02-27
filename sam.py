@@ -123,6 +123,11 @@ class PlaybackStream(Node, ControlsMixin):
 	self.sink_link = Sink.nodes[self.sink_path]
 	self.client_sink = Client.nodes[self.client_path]
 
+	
+    def move(self, sink):
+	logger.debug('moving %s to %s', self, sink.path)
+	self.obj.Move(sink.path)
+	
 
     def __str__(self):
 	return 'Playback %d: %s %s' % (self.index, self.volume, self.mute)

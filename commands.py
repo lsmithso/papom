@@ -50,13 +50,16 @@ def mute(v, nodes):
     if not nodes:
 	nodes = filter_all()
     for node in nodes:
-	print 'xxxxxx', node, node.playback_links
 	for ps in node.playback_links:
-	    print 'xxxxx', ps
 	    logger.debug('nuting %s %s', v, ps)
 	    ps.mute = v
 
 
+def move(clients, sink):
+    for client in clients:
+	for ps in client.playback_links:
+	    ps.move(sink)
+	    
 def print_sam():
     for k, v  in sam.Client.nodes.items():
 	print v.a_pid, '\t', v.a_name, '\t', v.a_exe, '\t',
@@ -68,15 +71,21 @@ def print_sam():
 
 
 if __name__ == '__main__':
-    #    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
     sam.build_sam()
     print_sam()
     ai = int(sys.argv[1])
-    #    blow_ears_off()
+    blow_ears_off()
     #    set_volume_all(intai)
     #    incr_volume_all(ai)
     print [str(x) for x in filter_pid(ai)]
     v = True if sys.argv[2] == '1' else False
     mute(v, filter_pid(ai))
+
+    for x in sam.Sink.nodes:
+	print x
+
+    spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink0']
+    move(filter_pid(ai), spkr)
     
     
