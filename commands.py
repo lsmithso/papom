@@ -57,9 +57,20 @@ def mute(v, nodes):
 	    ps.mute = v
 
 
+def print_sam():
+    for k, v  in sam.Client.nodes.items():
+	print v.a_pid, '\t', v.a_name, '\t', v.a_exe, '\t',
+	for ps in v.playback_links:
+	    print '\t', ps.sink_link.name,
+	print
+
+		
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    #    logging.basicConfig(level=logging.DEBUG)
     sam.build_sam()
+    print_sam()
     ai = int(sys.argv[1])
     #    blow_ears_off()
     #    set_volume_all(intai)
