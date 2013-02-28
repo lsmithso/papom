@@ -90,5 +90,5 @@ if __name__ == '__main__':
 	print x
 	#    print sam.Sink.nodes.keys()
     spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink%s' % sys.argv[2]]
-    move(filter_name(sys.argv[1], spkr))
+    move(filter_name(sys.argv[1]), spkr)
     
