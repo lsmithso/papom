@@ -21,6 +21,17 @@ def filter_pid(pid, nodes = None):
 	logger.debug('pid cmp %r %r', node.a_pid, pid)
 	if node.a_pid == pid:
 	    yield node
+
+def filter_name(name, nodes = None):
+    if not nodes:
+	nodes = filter_clients()
+    cre = re.compile(name, re.I)
+    for node in nodes:
+	match = cre.search(node.a_name)
+	if match:
+	    yield node
+	
+	
 	
 def blow_ears_off(nodes = None):
     if not nodes:
@@ -71,21 +82,13 @@ def print_sam():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    #    logging.basicConfig(level=logging.DEBUG)
     sam.build_sam()
     print_sam()
-    ai = int(sys.argv[1])
-    #    blow_ears_off()
-    #    set_volume_all(intai)
-    #    incr_volume_all(ai)
-    print [str(x) for x in filter_pid(ai)]
-    v = True if sys.argv[2] == '1' else False
-    mute(v, filter_pid(ai))
-
-    for x in sam.Sink.nodes:
+    print '*' * 80
+    for x in filter_name(sys.argv[1]):
 	print x
-
-    spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink0']
-    move(filter_pid(ai), spkr)
-    
+	#    print sam.Sink.nodes.keys()
+    spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink%s' % sys.argv[2]]
+    move(filter_name(sys.argv[1], spkr))
     
