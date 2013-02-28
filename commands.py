@@ -4,7 +4,7 @@ import sys, os, re, logging
 
 import sam
 
-logger = logging.getLogger('x')
+logger = logging.getLogger('__main__')
 
 def filter_all():
     for node in sam.Sink.nodes.values() + sam.PlaybackStream.nodes.values():
@@ -22,16 +22,23 @@ def filter_pid(pid, nodes = None):
 	if node.a_pid == pid:
 	    yield node
 
-def filter_name(name, nodes = None):
+def filter_re(res, attr, nodes = None):
     if not nodes:
 	nodes = filter_clients()
-    cre = re.compile(name, re.I)
+    cre = re.compile(res, re.I)
     for node in nodes:
-	match = cre.search(node.a_name)
+	match = cre.search(getattr(node,attr))
 	if match:
 	    yield node
+
+def 	 filter_process_name(name, nodes = None):
+    for x in filter_re(name, 'a_name', nodes):
+	yield x
 	
-	
+def 	 filter_exe_name(name, nodes = None):
+    for x in filter_re(name, 'a_exe', nodes):
+	yield x
+
 	
 def blow_ears_off(nodes = None):
     if not nodes:
@@ -82,13 +89,13 @@ def print_sam():
 
 
 if __name__ == '__main__':
-    #    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
     sam.build_sam()
     print_sam()
     print '*' * 80
-    for x in filter_name(sys.argv[1]):
+    for x in filter_process_name(sys.argv[1]):
 	print x
 	#    print sam.Sink.nodes.keys()
     spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink%s' % sys.argv[2]]
-    move(filter_name(sys.argv[1]), spkr)
+    move(filter_process_name(sys.argv[1]), spkr)
     

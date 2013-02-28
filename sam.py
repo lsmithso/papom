@@ -7,7 +7,7 @@
 # improve __str__ format. L
 # Only print last part of paths. Add src/sink to stream
 #
-import sys, os, dbus, logging
+import sys, os, dbus, logging, subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +126,17 @@ class PlaybackStream(Node, ControlsMixin):
 	
     def move(self, sink):
 	logger.debug('moving %s to %s', self, sink.path)
-	self.obj.Move(sink.path)
+	if 0:
+	    # pulseaudio dbus i/f asserts . POS.
+	    self.obj.Move(sink.path, dbus_interface = 'org.PulseAudio.Core1.Stream')
+	else:
+	    # Workround - spawn pacmd.
+	    cmd = 'pacmd move-sink-input %d %d' % (self.index, sink.index)
+	    logger.debug('pa move bug cmd: %s', cmd)
+	    pipe = subprocess.Popen(cmd.split(), stdin=None, stdout=subprocess.PIPE,
+				    stderr=sys.stderr)
+	    rsp = pipe.stdout
+	    logger.debug('pacmd rsp: %s', rsp.read(4*1024))
 	
 
     def __str__(self):
