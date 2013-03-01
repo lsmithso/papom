@@ -1,4 +1,7 @@
 # Exec commands on sam
+# TODO:
+# Review use of gens + iters. Maybe iterate the list once and pass a list of filter fns.
+# Add negate arg to re filters. Inverts sense of match, parse !foo from command line.
 
 import sys, os, re, logging
 
@@ -39,7 +42,22 @@ def 	 filter_exe_name(name, nodes = None):
     for x in filter_re(name, 'a_exe', nodes):
 	yield x
 
-	
+
+def filter_sink(name):
+    rv = []
+    cre = re.compile(name, re.I)
+    for sink in sam.Sink.nodes.values():
+	match = cre.search(sink.name)
+	if match:
+	    rv.append(sink)
+    if len(rv) > 1:
+	raise Exception('Too many Sink matches for %s. : %s' % ( name, '\n'.join([x.name for x in rv])))
+    elif not rv:
+	raise Exception('No sink matches for %s' % name)
+    return rv[0]
+
+   
+    
 def blow_ears_off(nodes = None):
     if not nodes:
 	nodes = filter_all()
@@ -79,6 +97,8 @@ def move(clients, sink):
 	    ps.move(sink)
 	    
 def print_sam():
+    for k, v in sam.Sink.nodes.items():
+	print v
     for k, v  in sam.Client.nodes.items():
 	print v.a_pid, '\t', v.a_name, '\t', v.a_exe, '\t',
 	for ps in v.playback_links:
@@ -89,13 +109,20 @@ def print_sam():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    if os.getenv('STFU_DEBUG'):
+	logging.basicConfig(level=logging.DEBUG)
     sam.build_sam()
     print_sam()
     print '*' * 80
-    for x in filter_process_name(sys.argv[1]):
-	print x
-	#    print sam.Sink.nodes.keys()
-    spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink%s' % sys.argv[2]]
-    move(filter_process_name(sys.argv[1]), spkr)
+    clients = filter_process_name(sys.argv[1])
+    #print 'clients:', '\n'.join([str(x) for x in clients])
+    sink = filter_sink(sys.argv[2])
+    print sink
+    move(clients, sink)
     
+#    for x in filter_process_name(sys.argv[1]):
+#	print x
+#	#    print sam.Sink.nodes.keys()
+#    spkr = sam.Sink.nodes['/org/pulseaudio/core1/sink%s' % sys.argv[2]]
+#    move(filter_process_name(sys.argv[1]), spkr)
+

@@ -35,6 +35,7 @@ stream? ie skype only sets up a playback stream in call, so cannot be
 muted in advance. Needs sigmal signal to work.
 
 Filter for loudest + quitest playback strams
+rework filters to be non-generators. Static list that has no state.
 
 
 CLI:
