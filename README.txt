@@ -36,6 +36,10 @@ muted in advance. Needs sigmal signal to work.
 
 Filter for loudest + quitest playback strams
 rework filters to be non-generators. Static list that has no state.
+sink name selector based on card/device/hw, rather tham pa name?
+Play test sound.
+Add move of sources. eg MIC to skype. This would allow ie files of credit card numbers etc tp be read out over the phone.
+[OTT - add sound like notification ie cursor over mail, weather, irc status + beep]
 
 
 CLI:
