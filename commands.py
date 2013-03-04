@@ -50,13 +50,7 @@ def filter_sink(name):
 	match = cre.search(sink.name)
 	if match:
 	    rv.append(sink)
-    if len(rv) > 1:
-	raise Exception('Too many Sink matches for %s. : %s' % ( name, '\n'.join([x.name for x in rv])))
-    elif not rv:
-	raise Exception('No sink matches for %s' % name)
-    return rv[0]
-
-   
+    return rv   
     
 def blow_ears_off(nodes = None):
     if not nodes:
@@ -79,16 +73,15 @@ def incr_volume(i, nodes = None):
 	nodes = filter_all()
     for node in nodes:
 	node.volume += i
-	logger.debug('Volume: %d for %s', node.volume, node)
+	logger.debug('Incr Volume: %d for %s', node.volume, node)
 
 
 def mute(v, nodes):
     if not nodes:
 	nodes = filter_all()
     for node in nodes:
-	for ps in node.playback_links:
-	    logger.debug('nuting %s %s', v, ps)
-	    ps.mute = v
+	logger.debug('nuting %s %s', v, ps)
+	node.mute = v
 
 
 def move(clients, sink):
@@ -96,6 +89,7 @@ def move(clients, sink):
 	for ps in client.playback_links:
 	    ps.move(sink)
 	    
+
 def print_sam():
     for k, v in sam.Sink.nodes.items():
 	print v
