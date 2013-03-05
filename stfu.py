@@ -83,9 +83,13 @@ def main(args):
 	vfn(mpy * v, targets)
 	print 'Set volume for target %s' % str_nodes(targets)
     elif action == 'mute':
-	pass
+	targets = resolve_targets(args)
+	commands.mute(True, targets)
+	print 'Muted %s' % str_nodes(targets)
     elif action == 'unmute':
-	pass
+	targets = resolve_targets(args)
+	commands.mute(False, targets)
+	print 'Unmuted %s' % str_nodes(targets)
     elif  action == 'move':
 	pass
     else:

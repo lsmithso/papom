@@ -74,7 +74,7 @@ def mute(v, nodes):
     if not nodes:
 	nodes = filter_contrallable()
     for node in nodes:
-	logger.debug('nuting %s %s', v, ps)
+	logger.debug('nuting %s %s', v, node)
 	node.mute = v
     return nodes
 
