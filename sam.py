@@ -121,7 +121,7 @@ class PlaybackStream(Node, ControlsMixin):
 
     def _make_links(self):
 	self.sink_link = Sink.nodes[self.sink_path]
-	self.client_sink = Client.nodes[self.client_path]
+	self.client_link = Client.nodes[self.client_path]
 
 	
     def move(self, sink):
@@ -140,7 +140,7 @@ class PlaybackStream(Node, ControlsMixin):
 	
 
     def __str__(self):
-	return 'Playback %d: %s %s' % (self.index, self.volume, self.mute)
+	return 'Playback %d: %s (%s) %s' % (self.index,self.client_link,  self.volume, self.mute)
 
 
 
