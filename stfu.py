@@ -14,8 +14,6 @@ def usage():
     print 'move clients sink -- Move one or more clients to sink'
     sys.exit(1)
 
-def resolve_client(arg):
-    pass
 
 
 def playback_streams(*args):
@@ -40,6 +38,27 @@ def resolve_targets(args):
 	usage()
     return set(rv)
 
+
+def resolve_movable(args):
+    if not args:
+	return sam.Client.nodes.values()
+    rv = []
+    for  arg in args:
+	rv.extend(commands.filter_pid(arg))
+	rv.extend(commands.filter_process_name(arg))
+	rv.extend(commands.filter_exe_name(arg))
+    if not rv:
+	print 'No targets match'
+	usage()
+    return set(rv)
+
+def resolve_sink(arg):
+    sinks = commands.filter_sink(arg)
+    if len(sinks) != 1:
+	print '%d sink(s) match. Source can only be moved to one sink' %len(sinks)
+	usage()
+    return sinks[0]
+	
 def assert_int(v):
     try:
 	return int(v)
@@ -91,7 +110,12 @@ def main(args):
 	commands.mute(False, targets)
 	print 'Unmuted %s' % str_nodes(targets)
     elif  action == 'move':
-	pass
+	if len(args) <1:
+	    usage()
+	sink = resolve_sink(args[0])
+	nodes = resolve_movable(args[1:])
+	commands.move(nodes, sink)
+	print 'Moved %s to %s' % (str_nodes(nodes), sink)
     else:
 	usage()
 	
