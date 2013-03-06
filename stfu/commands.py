@@ -5,6 +5,7 @@
 
 import sys, os, re, logging
 
+import stfu
 import sam
 
 logger = logging.getLogger('__main__')

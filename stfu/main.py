@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 import sys, os, logging
-import commands, sam
+
+import  commands,  sam
 
 
 def usage():
@@ -119,8 +119,4 @@ def main(args):
     else:
 	usage()
 	
-	
-if __name__ == '__main__':
-    main(sys.argv[1:])
-
     
