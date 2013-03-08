@@ -44,6 +44,10 @@ def resolve_targets(args):
 	cp = commands.filter_pid(arg, invert = invert)
 	cn = commands.filter_process_name(arg, invert = invert)
 	ce = commands.filter_exe_name(arg, invert = invert)
+	if invert:
+	    # If any of the inverts didn't match, then none of them match.
+	    if not (cp and cn and ce):
+		continue
 	ps = playback_streams(cp, cn, ce)
 	rv.extend(ps)
     if not rv:

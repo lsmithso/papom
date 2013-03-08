@@ -58,5 +58,26 @@ mute  [client|sink]
 unmute   [client|sink]
  move client sink
 
+Traceback (most recent call last):
+  File "./stfuc", line 7, in <module>
+    stfu.main.main(sys.argv[1:])
+  File "/home/lsmithso/src/python/stfu/stfu/main.py", line 113, in main
+    sam.build_sam()
+  File "/home/lsmithso/src/python/stfu/stfu/sam.py", line 192, in build_sam
+    Client.build(conn, core)
+  File "/home/lsmithso/src/python/stfu/stfu/sam.py", line 154, in build
+    super(Client, klass).build(conn, core, 'Clients')
+  File "/home/lsmithso/src/python/stfu/stfu/sam.py", line 42, in build
+    klass.nodes[path] = klass(path, obj)
+  File "/home/lsmithso/src/python/stfu/stfu/sam.py", line 159, in __init__
+    self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
+  File "/usr/lib/python2.7/dist-packages/dbus/proxies.py", line 68, in __call__
+    return self._proxy_method(*args, **keywords)
+  File "/usr/lib/python2.7/dist-packages/dbus/proxies.py", line 143, in __call__
+    **keywords)
+  File "/usr/lib/python2.7/dist-packages/dbus/connection.py", line 630, in call_blocking
+    message, timeout)
+dbus.exceptions.DBusException: org.freedesktop.DBus.Error.UnknownMethod: Method "Get" with signature "ss" on interface "org.freedesktop.DBus.Properties" doesn't exist
+
 
 
