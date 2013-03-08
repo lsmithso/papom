@@ -2,6 +2,9 @@ import sys, os, logging
 
 import  commands,  sam
 
+ARG_INVERT = '~'
+
+
 
 def usage():
     print 'Usage: stfu.py action args'
@@ -28,11 +31,21 @@ def resolve_targets(args):
 	return commands.filter_controllable()
     rv = []
     for  arg in args:
-	rv.extend(commands.filter_sink(arg))
-	cp = commands.filter_pid(arg)
-	cn = commands.filter_process_name(arg)
-	ce = commands.filter_exe_name(arg)
-	rv.extend(playback_streams(cp, cn, ce))
+	if arg[0] == ARG_INVERT:
+	    invert = True
+	    arg = arg[1:]
+	else:
+	    invert = False
+	# If inverted match on client, then sinks are selected for
+	# eg muting, thus muting the selected ps., even when not matched.
+	# FIXME: This isn't good enough
+	if not invert:
+	    rv.extend(commands.filter_sink(arg, invert = invert))
+	cp = commands.filter_pid(arg, invert = invert)
+	cn = commands.filter_process_name(arg, invert = invert)
+	ce = commands.filter_exe_name(arg, invert = invert)
+	ps = playback_streams(cp, cn, ce)
+	rv.extend(ps)
     if not rv:
 	print 'No targets match'
 	usage()
@@ -44,16 +57,26 @@ def resolve_movable(args):
 	return sam.Client.nodes.values()
     rv = []
     for  arg in args:
-	rv.extend(commands.filter_pid(arg))
-	rv.extend(commands.filter_process_name(arg))
-	rv.extend(commands.filter_exe_name(arg))
+	if arg[0] == ARG_INVERT:
+	    invert = True
+	    arg = arg[1:]
+	else:
+	    invert = False
+	rv.extend(commands.filter_pid(arg, invert = invert))
+	rv.extend(commands.filter_process_name(arg, invert = invert))
+	rv.extend(commands.filter_exe_name(arg, invert = invert))
     if not rv:
 	print 'No targets match'
 	usage()
     return set(rv)
 
 def resolve_sink(arg):
-    sinks = commands.filter_sink(arg)
+    if arg[0] == ARG_INVERT:
+	invert = True
+	arg = arg[1:]
+    else:
+	invert = False
+    sinks = commands.filter_sink(arg, invert)
     if len(sinks) != 1:
 	print '%d sink(s) match. Source can only be moved to one sink' %len(sinks)
 	usage()
@@ -71,7 +94,12 @@ def str_nodes(nodes):
 def main(args):
     if not args:
 	usage()
-	
+
+    if args[0] == '-n':
+	commands.	    noop = True
+	args = args[1:]
+    else:
+	commands.noop = False
     action = args[0]
     args= args[1:]
     debug= os.getenv('STFU_DEBUG')
@@ -118,5 +146,7 @@ def main(args):
 	print 'Moved %s to %s' % (str_nodes(nodes), sink)
     else:
 	usage()
+    if commands.noop:
+	print 'Commands were noop'
 	
     

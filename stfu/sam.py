@@ -6,6 +6,7 @@
 # Add move sink input
 # improve __str__ format. L
 # Only print last part of paths. Add src/sink to stream
+# Add record streams + move
 #
 import sys, os, dbus, logging, subprocess
 
