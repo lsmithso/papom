@@ -81,3 +81,43 @@ dbus.exceptions.DBusException: org.freedesktop.DBus.Error.UnknownMethod: Method 
 
 
 
+
+
+* Process Tree:
+Add psutil to chesseshop deps
+
+Add option to match process name/exe gainst current processes parents
++ siblings recursively. i
+
+
+def x(pid):
+    p = psutil.Process(pid)
+    for c in p.get_children():
+	print c.name, c.pid, c.ppid, p.cmdline
+    if p.ppid != 1:
+	x(p.ppid)
+
+ie stfuc  -p mute  
+
+
+
+
+ recursively try and match any parent pid or parents siblings pid
+that has a pid of a pa client. and mute it.
+
+Maybe add a filter for command line args? ie emacs --t test, and add it as -p option.
+
+
+Rename:
+vipa - VI Pulseaudio
+vipat
+vipatool
+
+patvi PA tool for VI
+
+vimixer
+
+
+Add command filter:
+   ie stufc nute emacs --t test
+

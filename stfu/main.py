@@ -2,6 +2,8 @@ import sys, os, logging
 
 import  commands,  sam
 
+logger = logging.getLogger(__name__)
+
 ARG_INVERT = '~'
 
 
@@ -26,9 +28,10 @@ def playback_streams(*args):
 	    rv.extend(node.playback_links)
     return rv
 
-def resolve_targets(args):
+def resolve_targets(args, pps = None):
     if not args:
-	return commands.filter_controllable()
+	# FIXME: Should filter parent procs?
+	return  commands.filter_controllable()
     rv = []
     for  arg in args:
 	if arg[0] == ARG_INVERT:
@@ -43,11 +46,17 @@ def resolve_targets(args):
 	    rv.extend(commands.filter_sink(arg, invert = invert))
 	cp = commands.filter_pid(arg, invert = invert)
 	cn = commands.filter_process_name(arg, invert = invert)
+	if pps:
+	    cn = commands.filter_ptree(cn, pps)
+	    logger.debug('filtered cn: %s', cn)
 	ce = commands.filter_exe_name(arg, invert = invert)
+	if pps:
+	    ce = commands.filter_ptree(ce, pps)
 	if invert:
 	    # If any of the inverts didn't match, then none of them match.
 	    if not (cp and cn and ce):
 		continue
+	logger.debug('matched client appss %s/%s/%s', cp, cn, ce)
 	ps = playback_streams(cp, cn, ce)
 	rv.extend(ps)
     if not rv:
@@ -56,19 +65,25 @@ def resolve_targets(args):
     return set(rv)
 
 
-def resolve_movable(args):
+def resolve_movable(args, pps):
     if not args:
 	return sam.Client.nodes.values()
     rv = []
     for  arg in args:
-	if arg[0] == ARG_INVERT:
+ 	if arg[0] == ARG_INVERT:
 	    invert = True
 	    arg = arg[1:]
 	else:
 	    invert = False
 	rv.extend(commands.filter_pid(arg, invert = invert))
-	rv.extend(commands.filter_process_name(arg, invert = invert))
-	rv.extend(commands.filter_exe_name(arg, invert = invert))
+	cn = commands.filter_process_name(arg, invert = invert)
+	if pps:
+	    cn = commands.filter_ptree(cn, pps)
+	rv.extend(cn)
+	ce = commands.filter_exe_name(arg, invert = invert)
+	if pps:
+	    ce = commands.filter_ptree(ce, pps)
+	rv.extend(ce)
     if not rv:
 	print 'No targets match'
 	usage()
@@ -104,6 +119,11 @@ def main(args):
 	args = args[1:]
     else:
 	commands.noop = False
+    if args[0] == '-p':
+	pstree = commands.process_parents(os.getpid(), [])
+	args =args[1:]
+    else:
+	pstree = None
     action = args[0]
     args= args[1:]
     debug= os.getenv('STFU_DEBUG')
@@ -130,22 +150,22 @@ def main(args):
 	    v = assert_int(args[0])
 	    mpy = 1
 	    vfn = commands.set_volume
-	targets = resolve_targets(args[1:])
+	targets = resolve_targets(args[1:], pstree)
 	vfn(mpy * v, targets)
 	print 'Set volume for target %s' % str_nodes(targets)
     elif action == 'mute':
-	targets = resolve_targets(args)
+	targets = resolve_targets(args, pstree)
 	commands.mute(True, targets)
 	print 'Muted %s' % str_nodes(targets)
     elif action == 'unmute':
-	targets = resolve_targets(args)
+	targets = resolve_targets(args, pstree)
 	commands.mute(False, targets)
 	print 'Unmuted %s' % str_nodes(targets)
     elif  action == 'move':
 	if len(args) <1:
 	    usage()
 	sink = resolve_sink(args[0])
-	nodes = resolve_movable(args[1:])
+	nodes = resolve_movable(args[1:], pstree)
 	commands.move(nodes, sink)
 	print 'Moved %s to %s' % (str_nodes(nodes), sink)
     else:

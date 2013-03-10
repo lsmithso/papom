@@ -1,9 +1,28 @@
 import sys, os, re, logging, operator
-
+import psutil
 import sam
 
 logger = logging.getLogger('__main__')
 noop = False
+
+def process_parents(pid, result):
+    p = psutil.Process(pid)
+    for c in p.get_children():
+	result.append(c)
+    if p.ppid != 1:
+	result = process_parents(p.ppid, result)
+    return result
+
+def filter_ptree(clients, processes):
+    rv = []
+    pid_list = [x.pid for x in processes]
+    logger.debug('parent pid  list: %s', pid_list)
+    for  client in clients:
+	logger.debug('xxxxx %s', client.a_name)
+	if client.a_pid in pid_list:
+	    logger.debug('adding %s', client)
+	    rv.append(client)
+    return rv
 
 def filter_controllable():
     return sam.Sink.nodes.values() + sam.PlaybackStream.nodes.values()
