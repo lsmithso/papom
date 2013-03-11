@@ -45,7 +45,9 @@ def filter_re(res, attr, clients = None, invert = False):
     rv = []
     for client in clients:
 	n = getattr(client, attr)
+	logger.debug('re cmp %s/%s/%s/%s|', op, attr, n, client)
 	if n and  op(cre.search(n), None):
+	    logger.debug('re cmp matched %r', cre.search(n))
 	    rv.append(client)
     return rv
 

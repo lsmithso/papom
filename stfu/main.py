@@ -49,7 +49,8 @@ def resolve_targets(args, pps = None):
 	if pps:
 	    cn = commands.filter_ptree(cn, pps)
 	    logger.debug('filtered cn: %s', cn)
-	ce = commands.filter_exe_name(arg, invert = invert)
+	    #
+	    # FIXME: executable filter triggers for a inverted client match. ie handraiser 	ce = commands.filter_exe_name(arg, invert = invert)
 	if pps:
 	    ce = commands.filter_ptree(ce, pps)
 	if invert:
