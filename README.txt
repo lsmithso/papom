@@ -119,5 +119,4 @@ vimixer
 
 
 Add command filter:
-   ie stufc nute emacs --t test
-
+   ie stufc nute emacs --t XXXX Moveing all to sink sets default sink? How to set default sink? Or add command to set default sink? 

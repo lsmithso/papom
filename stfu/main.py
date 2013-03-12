@@ -46,6 +46,8 @@ def resolve_targets(args, pps = None):
 	    rv.extend(commands.filter_sink(arg, invert = invert))
 	cp = commands.filter_pid(arg, invert = invert)
 	cn = commands.filter_process_name(arg, invert = invert)
+	ce = commands.filter_exe_name(arg, invert = invert)
+		
 	if pps:
 	    cn = commands.filter_ptree(cn, pps)
 	    logger.debug('filtered cn: %s', cn)
@@ -57,7 +59,6 @@ def resolve_targets(args, pps = None):
 	    # If any of the inverts didn't match, then none of them match.
 	    if not (cp and cn and ce):
 		continue
-	logger.debug('matched client appss %s/%s/%s', cp, cn, ce)
 	ps = playback_streams(cp, cn, ce)
 	rv.extend(ps)
     if not rv:
