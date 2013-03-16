@@ -87,6 +87,7 @@ class Sink(Node, ControlsMixin):
     @classmethod
     def build(klass, conn, core):
 	super(Sink, klass).build(conn, core, 'Sinks')
+	klass.default_sink = core.Get("org.PulseAudio.Core1", 'FallbackSink', dbus_interface=I_PROP)
 	
     def __init__(self, path, obj):
 	super(Sink, self).__init__(path, obj)

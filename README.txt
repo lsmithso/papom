@@ -120,3 +120,14 @@ vimixer
 
 Add command filter:
    ie stufc nute emacs --t XXXX Moveing all to sink sets default sink? How to set default sink? Or add command to set default sink? 
+
+Add network server that resets audio to default sink + max 
+
+For missing props:
+dbus.exceptions.DBusException: org.PulseAudio.Core1.NoSuchPropertyError: No such property: fallbackSink
+
+Add set of default_sink ie:
+ stfuc default sink sink
+stfuc default source source
+
+sam.Sink, implement class level descriptor to set/gert?
