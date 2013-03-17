@@ -131,7 +131,10 @@ def main(args):
     args= args[1:]
     debug= os.getenv('STFU_DEBUG')
     if debug and debug.lower() not in ('0', 'no', 'off'):
-	logging.basicConfig(level=logging.DEBUG)
+	log_level = logging.DEBUG
+    else:
+	log_level = logging.INFO
+    logging.basicConfig(level=log_level)
 	
     sam.build_sam()
 
