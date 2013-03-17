@@ -8,6 +8,7 @@ setup(name='stfu',
       url='http://open-networks.co.uk',
       scripts = ['stfuc'],
       provides=['stfu'],
+      requires = ['psutil'],
 
 
       )
