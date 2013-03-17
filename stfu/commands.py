@@ -112,7 +112,7 @@ def move(clients, sink):
 	    
 
 def print_sam():
-    print 'SINKS', sam.Sink.default_sink
+    print 'SINKS', sam.Sink.get_default()
     for k, v in sam.Sink.nodes.items():
 	print v
     print 'CLIENTS'

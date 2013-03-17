@@ -16,7 +16,8 @@ def usage():
     print 'volume [+-v] target -- set absolute volume, or incement/decrement current'
     print 'mute [target]'
     print 'unmute [target]'
-    print 'move clients sink -- Move one or more clients to sink'
+    print 'move sink clients  -- Move one or more clients to sink'
+    print 'default_sink sink  -- set default sink to sink'
     sys.exit(1)
 
 
@@ -170,6 +171,15 @@ def main(args):
 	nodes = resolve_movable(args[1:], pstree)
 	commands.move(nodes, sink)
 	print 'Moved %s to %s' % (str_nodes(nodes), sink)
+    elif action == 'default_sink':
+	if len(args) != 1:
+	    usage()
+	sink = resolve_sink(args[0])
+	if not commands.noop:
+	    sink.set_default()
+	print 'set default sink to: %s' % sink
+
+
     else:
 	usage()
     if commands.noop:

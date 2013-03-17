@@ -37,6 +37,7 @@ class Node(object):
 
     @classmethod
     def build(klass, conn, core, name):
+	klass.core = core
 	for path in  core.Get("org.PulseAudio.Core1", name, dbus_interface=I_PROP):
 	    obj = conn.get_object(object_path = path)
 	    klass.nodes[path] = klass(path, obj)
@@ -87,7 +88,7 @@ class Sink(Node, ControlsMixin):
     @classmethod
     def build(klass, conn, core):
 	super(Sink, klass).build(conn, core, 'Sinks')
-	klass.default_sink = core.Get("org.PulseAudio.Core1", 'FallbackSink', dbus_interface=I_PROP)
+	klass.default_sink_path = core.Get("org.PulseAudio.Core1", 'FallbackSink', dbus_interface=I_PROP)
 	
     def __init__(self, path, obj):
 	super(Sink, self).__init__(path, obj)
@@ -102,6 +103,16 @@ class Sink(Node, ControlsMixin):
 	for ps  in PlaybackStream.nodes.values():
 	    if ps.sink_link == self:
 		self.playback_links.append(ps)
+
+    #  Could use a class level property descriptor.
+    @classmethod
+    def get_default(klass):
+	return klass.nodes[klass.default_sink_path]
+
+    def set_default(self ):
+	self.core.Set("org.PulseAudio.Core1", 'FallbackSink',self.path,  dbus_interface=I_PROP)
+		
+    
     def __str__(self):
 	return 'Sink %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
 
@@ -117,13 +128,20 @@ class PlaybackStream(Node, ControlsMixin):
     def __init__(self, path, obj):
 	super(PlaybackStream, self).__init__(path, obj)
 	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)
-	self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
+	try:
+	    self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
+	except dbus.exceptions.DBusException, e:
+	    logger.error('Orphaned playback stream')
+	    self.client_path = None
 	self.sink_path = self.obj.Get(self.I_STREAM_PROP, "Device", dbus_interface=I_PROP)
 	logger.debug('Added: %s', self)
 
     def _make_links(self):
 	self.sink_link = Sink.nodes[self.sink_path]
-	self.client_link = Client.nodes[self.client_path]
+	if self.client_path:
+	    self.client_link = Client.nodes[self.client_path]
+	else:
+	    self.client_link = None
 
 	
     def move(self, sink):
