@@ -131,3 +131,13 @@ Add set of default_sink ie:
 stfuc default source source
 
 sam.Sink, implement class level descriptor to set/gert?
+
+
+From ssh:
+Need to set env:
+export PULSE_DBUS_SERVER=unix:path=/home/lsmithso/.pulse/3985e3d8f96325c5538ffdef00000006-runtime/dbus-socket
+
+In sam, get adddress from ~/.pulse/<symlink>/dbus-ssocket
+
+Either an option on the command line, or after a connect fail.
+
