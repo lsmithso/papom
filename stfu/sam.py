@@ -23,7 +23,7 @@ def get_core():
         address = server_lookup.Get("org.PulseAudio.ServerLookup1", "Address", dbus_interface=I_PROP)
 
     conn = dbus.connection.Connection(address)
-    logger.debug('connected to %s#', address)
+    logger.debug('connected to %s', address)
     core = conn.get_object(object_path="/org/pulseaudio/core1")
     return conn, core
 
