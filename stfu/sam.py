@@ -1,5 +1,7 @@
 # Sound architecture models
-
+# FIXME:
+# Missing mic inputs
+# Add monitor_of etc to source/sink
 # TODO:
 # Add print of client -> sink
 # Handle race where nodes in the pa server are dleted while running
@@ -128,6 +130,7 @@ class PlaybackStream(Node, ControlsMixin):
     def __init__(self, path, obj):
 	super(PlaybackStream, self).__init__(path, obj)
 	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)
+	self.client_link = 'n/a'  # May not have been built yet
 	try:
 	    self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
 	except dbus.exceptions.DBusException, e:
@@ -202,11 +205,50 @@ class Client(Node):
 	return 'Client %d: %s %s %s' % (self.index, self.a_name, self.a_exe, self.a_pid)
 
 
+class Source(Node, ControlsMixin):
+
+    I_SOURCE_PROP =  "org.PulseAudio.Core1.Device"
+    I_CONTROL = I_SOURCE_PROP
+	
+    @classmethod
+    def build(klass, conn, core):
+	super(Source, klass).build(conn, core, 'Sinks')
+	klass.default_source_path = core.Get("org.PulseAudio.Core1", 'FallbackSource', dbus_interface=I_PROP)
+	
+    def __init__(self, path, obj):
+	super(Source, self).__init__(path, obj)
+	self.index = self.obj.Get(self.I_SOURCE_PROP, "Index",  dbus_interface=I_PROP)	
+	self.name = self.obj.Get(self.I_SOURCE_PROP, "Name", dbus_interface=I_PROP)
+	self.record_links = []
+	logger.debug('Added: %s', self)
+	
+
+    def x_make_links(self):
+	# Sinks don't have a path back to Playback Streams, so artifice one.
+	for ps  in PlaybackStream.nodes.values():
+	    if ps.sink_link == self:
+		self.playback_links.append(ps)
+
+    #  Could use a class level property descriptor.
+    @classmethod
+    def get_default(klass):
+	return klass.nodes[klass.default_source_path]
+
+    def set_default(self ):
+	self.core.Set("org.PulseAudio.Core1", 'FallbackSource',self.path,  dbus_interface=I_PROP)
+		
+    
+    def __str__(self):
+	return 'Source %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
+
+
+
 
 
 def build_sam():
     conn, core = get_core()
     Sink.build(conn, core)
+    Source.build(conn, core)
     PlaybackStream.build(conn, core)
     Client.build(conn, core)
     Client.make_links()
@@ -219,21 +261,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     build_sam()
     print '*** Sinks', id(Sink.nodes)
-    for k, v in Sink.nodes.items():
-	print k, v
-	if v.index == 0:
-	    print v.volume
-	    v.volume = 60000
-	    print v.mute
-	    v.mute = False
-
-    print '*** Streams', id(PlaybackStream.nodes)
-    for k, v in PlaybackStream.nodes.items():
-	print k, v
-	if 0 and v.index == int(sys.argv[1]):
-	    v.mute = False
-    print '*** Clients'
-    for k, v in Client.nodes.items():
-	print k, v
-	print '|'.join([str(x) for x in v.playback_links])
     

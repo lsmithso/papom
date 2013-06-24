@@ -115,6 +115,9 @@ def print_sam():
     print 'SINKS', sam.Sink.get_default()
     for k, v in sam.Sink.nodes.items():
 	print v
+    print 'Sources:'
+    for k, v in sam.Source.nodes.items():
+	print v
     print 'CLIENTS'
     for k, v  in sam.Client.nodes.items():
 	print v.a_pid, '\t', v.a_name, '\t', v.a_exe, '\t',
