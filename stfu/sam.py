@@ -1,6 +1,5 @@
 # Sound architecture models
 # FIXME:
-# Add monitor_of etc to source/sink
 # TODO:
 # Add print of client -> sink
 # Handle race where nodes in the pa server are dleted while running
@@ -218,6 +217,10 @@ class Source(Node, ControlsMixin):
 	super(Source, self).__init__(path, obj)
 	self.index = self.obj.Get(self.I_SOURCE_PROP, "Index",  dbus_interface=I_PROP)	
 	self.name = self.obj.Get(self.I_SOURCE_PROP, "Name", dbus_interface=I_PROP)
+	try:
+	    self.monitor_of = self.obj.Get('org.PulseAudio.Core1.Source', "MonitorOfSink", dbus_interface=I_PROP)
+	except  dbus.exceptions.DBusException, e:
+	    self.monitor_of = None
 	self.record_links = []
 	logger.debug('Added: %s', self)
 	
@@ -238,7 +241,10 @@ class Source(Node, ControlsMixin):
 		
     
     def __str__(self):
-	return 'Source %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
+	rv =  'Source %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
+	if self.monitor_of:
+	    rv += ' Monitor: %s' % Sink.nodes[self.monitor_of]
+	return rv
 
 
 
