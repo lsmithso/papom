@@ -1,6 +1,5 @@
 # Sound architecture models
 # FIXME:
-# Missing mic inputs
 # Add monitor_of etc to source/sink
 # TODO:
 # Add print of client -> sink
@@ -212,7 +211,7 @@ class Source(Node, ControlsMixin):
 	
     @classmethod
     def build(klass, conn, core):
-	super(Source, klass).build(conn, core, 'Sinks')
+	super(Source, klass).build(conn, core, 'Sources')
 	klass.default_source_path = core.Get("org.PulseAudio.Core1", 'FallbackSource', dbus_interface=I_PROP)
 	
     def __init__(self, path, obj):
