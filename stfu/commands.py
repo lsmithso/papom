@@ -120,9 +120,11 @@ def print_sam():
 	print v
     print 'CLIENTS'
     for k, v  in sam.Client.nodes.items():
-	print v.a_pid, '\t', v.a_name, '\t', v.a_exe, '\t',
+	print v.a_pid, '\t', v.a_name, '\t', 
 	for ps in v.playback_links:
 	    print '\t', ps.sink_link.name,
+	for rs in v.record_links:
+	    print '\t', rs.source_link.name,
 	print
 
 		
