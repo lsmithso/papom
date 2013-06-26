@@ -25,7 +25,7 @@ def filter_ptree(clients, processes):
     return rv
 
 def filter_controllable():
-    return sam.Sink.nodes.values() + sam.PlaybackStream.nodes.values()
+    return sam.Sink.nodes.values() + sam.PlaybackStream.nodes.values() + sam.Source.nodes.values() 
 
 def filter_clients():
     return sam.Client.nodes.values()
@@ -57,11 +57,23 @@ def 	 filter_process_name(name, clients = None, invert = False):
 def 	 filter_exe_name(name, clients = None, invert = False):
     return filter_re(name, 'a_exe', clients, invert)
 
-def filter_sink(name, invert = False):
+
+def _filter_klass(klass, name, invert = False):
     cre = re.compile(name, re.I)
     # invert means == None
     op = operator.eq if invert else operator.ne
-    return [x for x in sam.Sink.nodes.values() if op(cre.search(x.name), None)]
+    return [x for x in klass.nodes.values() if op(cre.search(x.name), None)]
+
+
+def filter_sink(name, invert = False):
+    return _filter_klass(sam.Sink, name, invert)
+
+def filter_source(name, invert = False):
+    return _filter_klass(sam.Source, name, invert)
+
+def filter_source_sink(name, invert = False):
+    # FIXME: Think about what invert means in this case
+    return filter_source(name, invert) + filter_sink(name, invert)
     
 def blow_ears_off(nodes = None):
     if not nodes:

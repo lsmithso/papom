@@ -1,3 +1,8 @@
+# FIXME:
+# RecordStream missing Volume attr.
+# Add play: rec: to dst to disambiguate
+# Test move
+
 import sys, os, logging
 
 import  commands,  sam
@@ -11,13 +16,14 @@ ARG_INVERT = '~'
 def usage():
     print 'Usage: stfu.py action args'
     print 'help, h, ? - print this message and exit'
-    print 'print -- Print clients + sinks'
-    print 'max -- set all streams + sinks to max volume & unmuted. Warning: will blow ears off'
+    print 'print -- Print sinks + sources + clients'
+    print 'max -- set all streams + sinks + sources to max volume & unmuted. Warning: will blow ears off'
     print 'volume [+-v] target -- set absolute volume, or incement/decrement current'
     print 'mute [target]'
     print 'unmute [target]'
     print 'move sink clients  -- Move one or more clients to sink'
     print 'default_sink sink  -- set default sink to sink'
+    print 'default_source source -- set default source to source'
     sys.exit(1)
 
 
@@ -44,7 +50,7 @@ def resolve_targets(args, pps = None):
 	# eg muting, thus muting the selected ps., even when not matched.
 	# FIXME: This isn't good enough
 	if not invert:
-	    rv.extend(commands.filter_sink(arg, invert = invert))
+	    rv.extend(commands.filter_source_sink(arg, invert = invert))
 	cp = commands.filter_pid(arg, invert = invert)
 	cn = commands.filter_process_name(arg, invert = invert)
 	ce = commands.filter_exe_name(arg, invert = invert)
@@ -92,17 +98,17 @@ def resolve_movable(args, pps):
 	usage()
     return set(rv)
 
-def resolve_sink(arg):
+def resolve_ss(arg):
     if arg[0] == ARG_INVERT:
 	invert = True
 	arg = arg[1:]
     else:
 	invert = False
-    sinks = commands.filter_sink(arg, invert)
-    if len(sinks) != 1:
-	print '%d sink(s) match. Source can only be moved to one sink' %len(sinks)
+    ss = commands.filter_sources_sink(arg, invert)
+    if len(ss) != 1:
+	print '%d sink/source(s) match. Source can only be moved to one sink' %len(sinks)
 	usage()
-    return sinks[0]
+    return ss[0]
 	
 def assert_int(v):
     try:
@@ -170,9 +176,9 @@ def main(args):
     elif  action == 'move':
 	if len(args) <1:
 	    usage()
-	sink = resolve_sink(args[0])
+	ss = resolve_ss(args[0])
 	nodes = resolve_movable(args[1:], pstree)
-	commands.move(nodes, sink)
+	commands.move(nodes, ss)
 	print 'Moved %s to %s' % (str_nodes(nodes), sink)
     elif action == 'default_sink':
 	if len(args) != 1:

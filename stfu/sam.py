@@ -58,8 +58,8 @@ class ControlsMixin(object):
     
     def get_volume(self):
 	# Assumes balanced mono
-	    vs = self.obj.Get(self.I_CONTROL, "Volume",  dbus_interface=I_PROP)
-	    return  int(vs[0])
+	vs = self.obj.Get(self.I_CONTROL, "Volume",  dbus_interface=I_PROP)
+	return  int(vs[0])
 	    
 
     def set_volume(self, v):
@@ -251,9 +251,10 @@ class Source(Node, ControlsMixin):
 	    rv += ' Monitor: %s' % Sink.nodes[self.monitor_of]
 	return rv
 
-class RecordStream(Node, ControlsMixin):
+# RecordStream dbus interface doesnt support Volume, Mute properties,
+# despite what the docs say.
+class RecordStream(Node):
     I_STREAM_PROP =  "org.PulseAudio.Core1.Stream"
-    I_CONTROL = I_STREAM_PROP
 
     @classmethod
     def build(klass, conn, core):
