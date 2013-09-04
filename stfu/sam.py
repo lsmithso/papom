@@ -1,12 +1,13 @@
 # Sound architecture models
-
+# FIXME:
 # TODO:
 # Add print of client -> sink
 # Handle race where nodes in the pa server are dleted while running
 # Add move sink input
 # improve __str__ format. L
 # Only print last part of paths. Add src/sink to stream
-# Add record streams + move
+# Add record streams + move - clone of PlaybackStreams with different method.
+# ie source_output
 #
 import sys, os, dbus, logging, subprocess
 
@@ -57,8 +58,8 @@ class ControlsMixin(object):
     
     def get_volume(self):
 	# Assumes balanced mono
-	    vs = self.obj.Get(self.I_CONTROL, "Volume",  dbus_interface=I_PROP)
-	    return  int(vs[0])
+	vs = self.obj.Get(self.I_CONTROL, "Volume",  dbus_interface=I_PROP)
+	return  int(vs[0])
 	    
 
     def set_volume(self, v):
@@ -128,6 +129,7 @@ class PlaybackStream(Node, ControlsMixin):
     def __init__(self, path, obj):
 	super(PlaybackStream, self).__init__(path, obj)
 	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)
+	self.client_link = 'n/a'  # May not have been built yet
 	try:
 	    self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
 	except dbus.exceptions.DBusException, e:
@@ -175,8 +177,10 @@ class Client(Node):
     def __init__(self, path, obj):
 	super(Client, self).__init__(path, obj)
 	self.playback_links = []
+	self.record_links= [] 
 	self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
 	self.playback_streams = self.obj.Get(self.I_CLIENT_PROP, "PlaybackStreams", dbus_interface=I_PROP)
+	self.record_streams = self.obj.Get(self.I_CLIENT_PROP, "RecordStreams", dbus_interface=I_PROP)
 	prop_list = self.obj.Get(self.I_CLIENT_PROP, "PropertyList",  dbus_interface=I_PROP, byte_arrays=True)
 
 	# dbus returns byte array strings with a C style trailing null
@@ -196,22 +200,118 @@ class Client(Node):
 	# Dunno why streams links are arrays
 	for ps in self.playback_streams:
 	    self.playback_links.append(PlaybackStream.nodes[ps])
+	for rs in self.record_streams:
+	    self.record_links.append(RecordStream.nodes[rs])
 
     
     def __str__(self):
 	return 'Client %d: %s %s %s' % (self.index, self.a_name, self.a_exe, self.a_pid)
 
 
+class Source(Node, ControlsMixin):
+
+    I_SOURCE_PROP =  "org.PulseAudio.Core1.Device"
+    I_CONTROL = I_SOURCE_PROP
+	
+    @classmethod
+    def build(klass, conn, core):
+	super(Source, klass).build(conn, core, 'Sources')
+	klass.default_source_path = core.Get("org.PulseAudio.Core1", 'FallbackSource', dbus_interface=I_PROP)
+	
+    def __init__(self, path, obj):
+	super(Source, self).__init__(path, obj)
+	self.index = self.obj.Get(self.I_SOURCE_PROP, "Index",  dbus_interface=I_PROP)	
+	self.name = self.obj.Get(self.I_SOURCE_PROP, "Name", dbus_interface=I_PROP)
+	try:
+	    self.monitor_of = self.obj.Get('org.PulseAudio.Core1.Source', "MonitorOfSink", dbus_interface=I_PROP)
+	except  dbus.exceptions.DBusException, e:
+	    self.monitor_of = None
+	self.record_links = []
+	logger.debug('Added: %s', self)
+	
+
+    def _make_links(self):
+	# Sources don't have a path back to Record Streams, so artifice one.
+	for rs  in RecordStream.nodes.values():
+	    if rs.source_link == self:
+		self.record_links.append(rs)
+
+    #  Could use a class level property descriptor.
+    @classmethod
+    def get_default(klass):
+	return klass.nodes[klass.default_source_path]
+
+    def set_default(self ):
+	self.core.Set("org.PulseAudio.Core1", 'FallbackSource',self.path,  dbus_interface=I_PROP)
+		
+    
+    def __str__(self):
+	rv =  'Source %d: %s %s %s' % (self.index, self.name, self.volume, self.mute)
+	if self.monitor_of:
+	    rv += ' Monitor: %s' % Sink.nodes[self.monitor_of]
+	return rv
+
+# RecordStream dbus interface doesnt support Volume, Mute properties,
+# despite what the docs say.
+class RecordStream(Node):
+    I_STREAM_PROP =  "org.PulseAudio.Core1.Stream"
+
+    @classmethod
+    def build(klass, conn, core):
+ 	super(RecordStream, klass).build(conn, core, 'RecordStreams')
+	
+    def __init__(self, path, obj):
+	super(RecordStream, self).__init__(path, obj)
+	self.index = self.obj.Get(self.I_STREAM_PROP, "Index", dbus_interface=I_PROP)
+	self.client_link = 'n/a'  # May not have been built yet
+	try:
+	    self.client_path = self.obj.Get(self.I_STREAM_PROP, "Client", dbus_interface=I_PROP)
+	except dbus.exceptions.DBusException, e:
+	    logger.error('Orphaned playback stream')
+	    self.client_path = None
+	self.source_path = self.obj.Get(self.I_STREAM_PROP, "Device", dbus_interface=I_PROP)
+	logger.debug('Added: %s', self)
+
+    def _make_links(self):
+	self.client_link = Client.nodes[self.client_path]
+	if self.source_path:
+	    self.source_link = Source.nodes[self.source_path]
+	else:
+	    self.source_link = None
+
+	
+    def move(self, source):
+	logger.debug('moving %s to %s', self, source.path)
+	if 0:
+	    # pulseaudio dbus i/f asserts . POS.
+	    self.obj.Move(source.path, dbus_interface = 'org.PulseAudio.Core1.Stream')
+	else:
+	    # Workround - spawn pacmd.
+	    cmd = 'pacmd move-source-output %d %d' % (self.index, source.index)
+	    logger.debug('pa move bug cmd: %s', cmd)
+	    pipe = subprocess.Popen(cmd.split(), stdin=None, stdout=subprocess.PIPE,
+				    stderr=sys.stderr)
+	    rsp = pipe.stdout
+	    logger.debug('pacmd rsp: %s', rsp.read(4*1024))
+	
+
+    def __str__(self):
+	return 'record %d: %s (%s) %s' % (self.index,self.client_link,  self.volume, self.mute)
+
 
 
 def build_sam():
     conn, core = get_core()
     Sink.build(conn, core)
+    Source.build(conn, core)
     PlaybackStream.build(conn, core)
+    RecordStream.build(conn,core) 
     Client.build(conn, core)
     Client.make_links()
     PlaybackStream.make_links()
+    RecordStream.make_links()
     Sink.make_links()
+    Source.make_links() # FIXME
     
 
 if __name__ == '__main__':
@@ -219,21 +319,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     build_sam()
     print '*** Sinks', id(Sink.nodes)
-    for k, v in Sink.nodes.items():
-	print k, v
-	if v.index == 0:
-	    print v.volume
-	    v.volume = 60000
-	    print v.mute
-	    v.mute = False
-
-    print '*** Streams', id(PlaybackStream.nodes)
-    for k, v in PlaybackStream.nodes.items():
-	print k, v
-	if 0 and v.index == int(sys.argv[1]):
-	    v.mute = False
-    print '*** Clients'
-    for k, v in Client.nodes.items():
-	print k, v
-	print '|'.join([str(x) for x in v.playback_links])
     
