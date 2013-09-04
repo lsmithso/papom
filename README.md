@@ -1,6 +1,6 @@
-* Pulseaudio stfu
+# Pulseaudio stfu
 
-** Introduction
+## Introduction
 Acts on playback streams, selected by pid, process name, xid.
 Nultiple streams may be selected by specifying pid lists, or with a process name that matches multiple processess.
 Streams may be moved to a new sink
@@ -12,7 +12,7 @@ TODO:
 Look at Xid
 Look at process tree to find any parents or siblings that are sinks.
 
-* Implementation
+# Implementation
 Classes for:
   Clients matched by pid, process name etc. class dict to match.
 Device matched by name or submatch
@@ -72,9 +72,9 @@ Traceback (most recent call last):
   File "/home/lsmithso/src/python/stfu/stfu/sam.py", line 159, in __init__
     self.index = self.obj.Get(self.I_CLIENT_PROP, "Index", dbus_interface=I_PROP)
   File "/usr/lib/python2.7/dist-packages/dbus/proxies.py", line 68, in __call__
-    return self._proxy_method(*args, **keywords)
+    return self._proxy_method(#args, ##keywords)
   File "/usr/lib/python2.7/dist-packages/dbus/proxies.py", line 143, in __call__
-    **keywords)
+    ##keywords)
   File "/usr/lib/python2.7/dist-packages/dbus/connection.py", line 630, in call_blocking
     message, timeout)
 dbus.exceptions.DBusException: org.freedesktop.DBus.Error.UnknownMethod: Method "Get" with signature "ss" on interface "org.freedesktop.DBus.Properties" doesn't exist
@@ -83,7 +83,7 @@ dbus.exceptions.DBusException: org.freedesktop.DBus.Error.UnknownMethod: Method 
 
 
 
-* Process Tree:
+# Process Tree:
 Add psutil to chesseshop deps
 
 Add option to match process name/exe gainst current processes parents

@@ -14,7 +14,7 @@ ARG_INVERT = '~'
 
 
 def usage():
-    print 'Usage: stfu.py action args'
+    print 'Usage: %s action args' % sys.argv[0]
     print 'help, h, ? - print this message and exit'
     print 'print -- Print sinks + sources + clients'
     print 'max -- set all streams + sinks + sources to max volume & unmuted. Warning: will blow ears off'
@@ -135,7 +135,7 @@ def main(args):
 	pstree = None
     action = args[0]
     args= args[1:]
-    debug= os.getenv('STFU_DEBUG')
+    debug= os.getenv('PAPOM_DEBUG')
     if debug and debug.lower() not in ('0', 'no', 'off'):
 	log_level = logging.DEBUG
     else:
