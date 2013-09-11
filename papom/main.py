@@ -104,9 +104,10 @@ def resolve_ss(arg):
 	arg = arg[1:]
     else:
 	invert = False
-    ss = commands.filter_sources_sink(arg, invert)
+    ss = commands.filter_source_sink(arg, invert)
     if len(ss) != 1:
-	print '%d sink/source(s) match. Source can only be moved to one sink' %len(sinks)
+	print '%d sink/source(s) match. client can only be moved to one sink/source' %len(ss)
+	print '\n'.join([str(s) for s in ss])
 	usage()
     return ss[0]
 	
@@ -179,7 +180,7 @@ def main(args):
 	ss = resolve_ss(args[0])
 	nodes = resolve_movable(args[1:], pstree)
 	commands.move(nodes, ss)
-	print 'Moved %s to %s' % (str_nodes(nodes), sink)
+	print 'Moved %s to %s' % (str_nodes(nodes), ss)
     elif action == 'default_sink':
 	if len(args) != 1:
 	    usage()
