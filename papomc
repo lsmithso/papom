@@ -2,7 +2,6 @@
 import sys
 import papom
 import papom.main
-	
+
 if __name__ == '__main__':
     papom.main.main(sys.argv[1:])
-
